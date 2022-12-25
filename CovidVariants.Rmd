@@ -1,0 +1,192 @@
+---
+title: "Evidencia 2"
+author: "Victoria Ramírez Castro"
+date: '2022-05-02'
+output: html_document
+---
+
+Integrantes:
+Victoria Ramírez Castro | A01640824
+Armando Terrazas Gómez | A01640924
+Anna Claudia Norzagaray Marquez | A01640991
+
+```{r}
+if(!is.null(dev.list())) dev.off()
+# Clear console
+cat("\014") 
+# Clean workspace
+rm(list=ls())
+```
+
+```{r,fig.height=50}
+
+options(max.print = .Machine$integer.max)
+
+library("readxl")
+library("ape")
+library("seqinr")
+
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("Biostrings")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("DECIPHER")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+install.packages("DECIPHER")
+library(DECIPHER)
+
+library("Biostrings")
+install.packages("phytools")
+library(phytools)
+library(adegenet)
+install.packages("viridis") 
+library(viridis)
+library(ggplot2)
+library(ggtree)
+
+variantes <- read_excel("Variantes.xlsx")
+secuencias <- read.GenBank(variantes[[2]])
+
+write.dna(secuencias,  file ="secuencias.fasta", format = "fasta", append = FALSE)
+
+virus_secuencias <- read.fasta("secuencias.fasta", seqtype = "DNA", as.string = TRUE, forceDNAtolower = FALSE)
+
+write.fasta(sequences = virus_secuencias, names = variantes$Variante, nbchar = 10, file.out = "secuencias.fasta")
+
+virus_secuencias <- read.fasta("secuencias.fasta", seqtype = "DNA", as.string = FALSE, forceDNAtolower = FALSE)
+
+limpiar_archivo <- function(cadena){
+  cadena <- gsub(", ","",toString(cadena))
+  cadena <- gsub("n","",cadena)
+  cadena <- gsub(" ","",cadena)
+  cadena <- unlist(strsplit(cadena,""))
+  return(cadena)
+}
+
+for (i in 1:length(virus_secuencias)) {
+  virus_secuencias[[i]] = limpiar_archivo(virus_secuencias[[i]])
+}
+
+
+for (i in 1:length(virus_secuencias)){
+  print(paste("Variante",variantes$Variante[i],": ",length(virus_secuencias[[i]])))
+}
+
+numAdenina <- c()
+numTimina <- c()
+numGuanina <- c()
+numCitosina <- c()
+for(i in 1:length(virus_secuencias)){
+  variable_Bases = count(virus_secuencias[[i]],1)
+  numAdenina = c(numAdenina,variable_Bases["a"])
+  numTimina <- c(numTimina,variable_Bases["t"])
+  numGuanina <- c(numGuanina,variable_Bases["g"])
+  numCitosina <- c(numCitosina,variable_Bases["c"])
+  print(count(virus_secuencias[[i]],1))
+}
+
+
+install.packages("ggpubr")
+library("ggpubr")
+
+library(scales)
+
+colorcitos <- c(
+"#FF5733", 
+"#FFAF33",
+"#CAFF33",
+"#1D8348",
+"#117A65",
+"#1ABC9C",
+"#1B4F72",
+"#3498DB",
+"#5B2C6F",
+"#FADBD8",
+"#E74C3C",
+"#34495E",
+"#5E345A",
+"#F70589",
+"#BF87D6",
+"#A98868",
+"#81A56E",
+"#3E2245",
+"#EADDC6",
+"#B3B6B7"
+)
+
+
+df_A <- data.frame(base = rep("A", times = 20),
+                 variantes = variantes[[1]], 
+                 tots = numAdenina)
+Adenina <- ggplot(data = df_A, aes(x = tots, y = variantes, fill = variantes)) + geom_bar(stat = "identity") + ggtitle("Composición de Adenina") + labs(x = "Total de Adenina", y = "Bases", fill = "variantes") + theme_update() + scale_fill_manual(values = colorcitos)
+
+df_C <- data.frame(base = rep("C", times = 20),
+                 variantes = variantes[[1]], 
+                 tots = numCitosina)
+Citosina <- ggplot(data = df_C, aes(x = tots, y = variantes, fill = variantes)) + geom_bar(stat = "identity") + ggtitle("Composición de Citosina") + labs(x = "Total de Citosina", y = "Variantes", fill = "variantes") + theme_update() + scale_fill_manual(values = colorcitos)
+
+df_T <- data.frame(base = rep("T", times = 20),
+                 variantes = variantes[[1]], 
+                 tots = numTimina)
+Timina <- ggplot(data = df_T, aes(x = tots, y = variantes, fill = variantes)) + geom_bar(stat = "identity") + ggtitle("Composición de Timina") + labs(x = "Total de Timina", y = "Variantes", fill = "variantes") + theme_update() + scale_fill_manual(values = colorcitos)
+
+df_G <- data.frame(base = rep("G", times = 20),
+                 variantes = variantes[[1]], 
+                 tots = numGuanina)
+Guanina <- ggplot(data = df_G, aes(x = tots, y = variantes, fill = variantes)) + geom_bar(stat = "identity") + ggtitle("Composición de Guanina") + labs(x = "Total de Guanina", y = "Variantes", fill = "variantes") + theme_update() + scale_fill_manual(values = colorcitos)
+```
+
+
+```{r,fig.width=15, fig.height=30}
+
+grafica <- ggarrange(Adenina,Timina,Guanina,Citosina,ncol = 1, nrow = 4, padding = 1)
+grafica
+
+
+```
+
+
+```{r}
+library("ape")
+library("seqinr")
+library("Biostrings")
+library("DECIPHER")
+library("ade4")
+library("viridis")
+
+
+
+write.fasta(sequences = virus_secuencias, names = variantes$Variante, nbchar = 10, file.out = "secuencias.fasta")
+
+virus_secuencias <- read.fasta("secuencias.fasta", seqtype = "DNA", as.string = FALSE, forceDNAtolower = FALSE)
+
+virus_secuencias <- readDNAStringSet("secuencias.fasta", format = "fasta")
+virus_seq_not_align <- OrientNucleotides(virus_secuencias)
+virus_seq_align <- AlignSeqs(virus_seq_not_align)
+
+writeXStringSet(virus_seq_align, file="virus_seq_align.fasta")
+
+virus_aligned <- read.alignment("virus_seq_align.fasta", format = "fasta")
+matriz_distancia <- dist.alignment(virus_aligned, matrix = "similarity")
+temp <- as.data.frame(as.matrix(matriz_distancia))
+table.paint(temp, cleg=0, clabel.row=.5, clabel.col=.5) + scale_color_viridis()
+virus_tree <- nj(matriz_distancia)
+class(virus_tree) 
+virus_tree <- ladderize(virus_tree)
+
+png('arbol2.png')
+plot(virus_tree, cex = 0.6)
+title("Árbol Filogenético de Variantes de Sars-CoV-2")
+dev.off()
+plot(virus_tree, cex = 0.6)
+title("Árbol Filogenético de Variantes de Sars-CoV-2")
+
+
+
+```
+
+
